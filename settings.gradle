@@ -1,0 +1,4 @@
+include ':kdata-livedata'
+include ':kdata-coroutines'
+include ':kdata'
+rootProject.name = "KData"
