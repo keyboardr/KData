@@ -8,12 +8,10 @@ import androidx.lifecycle.Lifecycle.State.STARTED
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.keyboardr.kdata.internal.Actual
+import com.keyboardr.kdata.internal.MainThreadHandler
 import com.keyboardr.kdata.internal.Maybe
 import com.keyboardr.kdata.internal.NotSet
 import com.keyboardr.kdata.internal.SafeIterableMap
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 public fun interface Observer<in T> {
   public fun onChanged(value: T)
@@ -164,7 +162,8 @@ public abstract class KLiveData<T> : KData<T> {
     when {
       existing == null -> owner.lifecycle.addObserver(wrapper)
       !existing.isAttachedTo(owner) -> throw IllegalArgumentException(
-          "Cannot add the same observer with different lifecycles")
+        "Cannot add the same observer with different lifecycles"
+      )
     }
   }
 
@@ -248,7 +247,7 @@ public abstract class KLiveData<T> : KData<T> {
     }
     if (!postTask) return
 
-    GlobalScope.launch(Dispatchers.Main) {
+    MainThreadHandler.post {
       setValue(synchronized(dataLock) {
         val newValue = pendingData as Actual<T>
         pendingData = NotSet
@@ -354,7 +353,7 @@ public abstract class KLiveData<T> : KData<T> {
   }
 
   private inner class LifecycleBoundObserver(val owner: LifecycleOwner, observer: Observer<T>) :
-      ObserverWrapper(observer), LifecycleEventObserver {
+    ObserverWrapper(observer), LifecycleEventObserver {
     override val shouldBeActive: Boolean
       get() = owner.lifecycle.currentState.isAtLeast(STARTED)
 
